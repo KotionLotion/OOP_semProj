@@ -1,0 +1,26 @@
+Table employees {
+  id integer [primary key]
+  username varchar
+  role varchar
+  department varchar
+  created_at timestamp
+}
+
+Table shifts {
+  id integer [primary key]
+  name varchar
+  start_time timestamp
+  end_time timestamp
+  created_at timestamp
+}
+
+Table employee_shifts {
+  id integer [primary key]
+  employee_id integer [not null]
+  shift_id integer [not null]
+  assigned_date date
+  created_at timestamp
+}
+
+Ref: employee_shifts.employee_id > employees.id
+Ref: employee_shifts.shift_id > shifts.id
