@@ -1,67 +1,99 @@
 #ifndef SHIFT_MANAGEMENT_H
 #define SHIFT_MANAGEMENT_H
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <string>
+#include <vector>
 
-/*
-   STRUCT DEFINITIONS */
+using namespace std;
 
-typedef struct {
+/*BASE CLASS */
+class Base {
+protected:
     int id;
-    char username[100];
-    char role[100];
-    char department[100];
-} Employee;
+    string createdAt;
 
-typedef struct {
-    int id;
-    char name[100];
-    char start_time[20];
-    char end_time[20];
-} Shift;
+public:
+    Base(int id = 0, string createdAt = "");
 
-typedef struct {
-    int id;
-    int employee_id;
-    int shift_id;
-    char assigned_date[20];
-} EmployeeShift;
+    int getId() const;
+    string getCreatedAt() const;
 
+    virtual void save() = 0;
+};
 
-/*EMPLOYEE FUNCTIONS */
+/* EMPLOYEE CLASS */
+class Employee : public Base {
+private:
+    string username;
+    string role;
+    string department;
 
-void addEmployee(Employee employee);
-void viewAllEmployees();
-Employee getEmployeeById(int id);
-void updateEmployee(Employee employee);
-void deleteEmployee(int id);
+public:
+    Employee(string username, string role, string department, int id = 0, string createdAt = "");
 
+    string getUsername() const;
+    string getRole() const;
+    string getDepartment() const;
 
-/*
-   SHIFT FUNCTIONS*/
+    void setUsername(string username);
+    void setRole(string role);
+    void setDepartment(string department);
 
-void addShift(Shift shift);
-void viewAllShifts();
-Shift getShiftById(int id);
-void updateShift(Shift shift);
-void deleteShift(int id);
+    void save() override;
+};
 
+/*SHIFT CLASS*/
+class Shift : public Base {
+private:
+    string name;
+    string startTime;
+    string endTime;
 
-/*SHIFT ASSIGNMENT FUNCTIONS*/
+public:
+    Shift(string name, string startTime, string endTime, int id = 0, string createdAt = "");
 
-void assignShift(int employee_id, int shift_id, char assigned_date[]);
-void assignRecurringShift(int employee_id, int shift_id, char days_of_week[], char start_date[], char end_date[]);
-void viewEmployeeShifts(int employee_id);
-void removeEmployeeShift(int assignment_id);
+    string getName() const;
+    string getStartTime() const;
+    string getEndTime() const;
 
+    void setName(string name);
+    void setStartTime(string startTime);
+    void setEndTime(string endTime);
 
-/*
-   SCHEDULE FUNCTIONS*/
+    void save() override;
+};
 
-void viewScheduleByDate(char date[]);
-void viewEmployeeSchedule(int employee_id);
-void viewDepartmentSchedule(char department[]);
+/* EMPLOYEE SHIFT CLASS */
+class EmployeeShift : public Base {
+private:
+    int employeeId;
+    int shiftId;
+    string assignedDate;
 
+public:
+    EmployeeShift(int employeeId, int shiftId, string assignedDate, int id = 0, string createdAt = "");
+
+    int getEmployeeId() const;
+    int getShiftId() const;
+    string getAssignedDate() const;
+
+    void setEmployeeId(int id);
+    void setShiftId(int id);
+    void setAssignedDate(string date);
+
+    void save() override;
+};
+
+/*SHIFT SCHEDULER (UTILITY)*/
+class ShiftScheduler {
+public:
+    static void assignRecurringShift(
+        int employeeId,
+        int shiftId,
+        vector<string> daysOfWeek,
+        string startDate,
+        string endDate
+    );
+};
 
 #endif
