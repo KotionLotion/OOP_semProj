@@ -29,7 +29,8 @@ private:
     string department;
 
 public:
-    Employee(string username, string role, string department, int id = 0, string createdAt = "");
+    Employee(string username, string role, string department, int id = 0, string createdAt = "")
+    : Base(id, createdAt)
 
     string getUsername() const;
     string getRole() const;
@@ -50,7 +51,8 @@ private:
     string endTime;
 
 public:
-    Shift(string name, string startTime, string endTime, int id = 0, string createdAt = "");
+    Shift(string name, string startTime, string endTime, int id = 0, string createdAt = "")
+    : Base(id, createdAt)
 
     string getName() const;
     string getStartTime() const;
@@ -71,7 +73,8 @@ private:
     string assignedDate;
 
 public:
-    EmployeeShift(int employeeId, int shiftId, string assignedDate, int id = 0, string createdAt = "");
+    EmployeeShift(int employeeId, int shiftId, string assignedDate, int id = 0, string createdAt = "")
+    : Base(id, createdAt)
 
     int getEmployeeId() const;
     int getShiftId() const;
