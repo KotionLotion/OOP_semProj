@@ -6,22 +6,26 @@
 
 using namespace std;
 
-/*BASE CLASS */
 class Base {
 protected:
     int id;
     string createdAt;
 
 public:
-    Base(int id = 0, string createdAt = "");
+    Base(int id = 0, string createdAt = "")
+        : id(id), createdAt(createdAt) {}
 
-    int getId() const;
-    string getCreatedAt() const;
+    int getId() const {
+        return id;
+    }
+
+    string getCreatedAt() const {
+        return createdAt;
+    }
 
     virtual void save() = 0;
 };
 
-/* EMPLOYEE CLASS */
 class Employee : public Base {
 private:
     string username;
@@ -30,20 +34,19 @@ private:
 
 public:
     Employee(string username, string role, string department, int id = 0, string createdAt = "")
-    : Base(id, createdAt)
+        : Base(id, createdAt), username(username), role(role), department(department) {}
 
-    string getUsername() const;
-    string getRole() const;
-    string getDepartment() const;
+    string getUsername() const { return username; }
+    string getRole() const { return role; }
+    string getDepartment() const { return department; }
 
-    void setUsername(string username);
-    void setRole(string role);
-    void setDepartment(string department);
+    void setUsername(string username) { this->username = username; }
+    void setRole(string role) { this->role = role; }
+    void setDepartment(string department) { this->department = department; }
 
     void save() override;
 };
 
-/*SHIFT CLASS*/
 class Shift : public Base {
 private:
     string name;
@@ -52,20 +55,19 @@ private:
 
 public:
     Shift(string name, string startTime, string endTime, int id = 0, string createdAt = "")
-    : Base(id, createdAt)
+        : Base(id, createdAt), name(name), startTime(startTime), endTime(endTime) {}
 
-    string getName() const;
-    string getStartTime() const;
-    string getEndTime() const;
+    string getName() const { return name; }
+    string getStartTime() const { return startTime; }
+    string getEndTime() const { return endTime; }
 
-    void setName(string name);
-    void setStartTime(string startTime);
-    void setEndTime(string endTime);
+    void setName(string name) { this->name = name; }
+    void setStartTime(string startTime) { this->startTime = startTime; }
+    void setEndTime(string endTime) { this->endTime = endTime; }
 
     void save() override;
 };
 
-/* EMPLOYEE SHIFT CLASS */
 class EmployeeShift : public Base {
 private:
     int employeeId;
@@ -74,20 +76,19 @@ private:
 
 public:
     EmployeeShift(int employeeId, int shiftId, string assignedDate, int id = 0, string createdAt = "")
-    : Base(id, createdAt)
+        : Base(id, createdAt), employeeId(employeeId), shiftId(shiftId), assignedDate(assignedDate) {}
 
-    int getEmployeeId() const;
-    int getShiftId() const;
-    string getAssignedDate() const;
+    int getEmployeeId() const { return employeeId; }
+    int getShiftId() const { return shiftId; }
+    string getAssignedDate() const { return assignedDate; }
 
-    void setEmployeeId(int id);
-    void setShiftId(int id);
-    void setAssignedDate(string date);
+    void setEmployeeId(int id) { employeeId = id; }
+    void setShiftId(int id) { shiftId = id; }
+    void setAssignedDate(string date) { assignedDate = date; }
 
     void save() override;
 };
 
-/*SHIFT SCHEDULER (UTILITY)*/
 class ShiftScheduler {
 public:
     static void assignRecurringShift(
