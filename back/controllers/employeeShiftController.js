@@ -1,14 +1,13 @@
 const db = require('../db/db');
-const { EmployeeShift } = require('../dist/EmployeeShift');
-const { ShiftScheduler } = require('../dist/ShiftScheduler');
+const { Shift } = require('../dist/Shifts');
 
-const employeeShiftController = {
+const shiftController = {
 
-    assignShift: (req, res) => {
-        const { employeeId, shiftId, assignedDate} = req.body;
-        const shift = new EmployeeShift(employeeId, shiftId, new Date(assignedDate));
+    addShift: (req, res) => {
+        const {name, startTime, endTime} = req.body;
+        const shift = new Shift(name, new Date(startTime), new Date(endTime));
 
-        shift.save(db, (err,result) => {
+        shift.save(db, (err, result) => {
             if (err) {
                 res.json({
                     success: false,
@@ -18,46 +17,48 @@ const employeeShiftController = {
             }
 
             res.json({
-                success:true,
-                message: 'Shift assigned to' + employeeId,
-                assignmentId: shift.getId()
+                success: true,
+                message: 'Shift added successfully!',
+                shiftId: shift.getId()
             });
         });
     },
 
-    assignRecurringShift: (req, res) => {
-        const { employeeId, shiftId,  daysOfWeek, startDate, endDate } = req.body;
-    
-        ShiftScheduler.assignRecurringShift(db, employeeId, shiftId, daysOfWeek, new Date(startDate), new Date(endDate), (err) => {
-            if (err) { 
-                res.json({
-                    success: false,
-                    error: err.message
-                });
-                return;
-            }
-            res.json({
-                success:true,
-                message: 'Recurring shifts assigned'
-            });
-        });
-    },
-
-    getShiftsForEmployee: (req, res) => {
-        const id = req.params.id;
-        EmployeeShift.findByEmployee(db, employeeId, (err, shifts) => {
+    getAllShifts: (req, res) => {
+        Shift.findAll(db,(err, shifts) => {
             if (err) {
                 res.json({
-                    success: false,
+                    success:false,
                     error: err.message
                 });
                 return;
             }
 
             res.json(shifts);
-        });
+        })
+    },
 
+    getShift: (req, res) => {
+        const id = req.params.id;
+        Shift.findById(db, id, (err, shift) => {
+            if (err) {
+                res.json({
+                    success: false,
+                    error: err.message
+                });
+                return;
+            }
+            if(shift) {
+                res.json(shift);
+            }
+            else {
+                res.json({
+                    success:false,
+                    message: 'Shift Not Found'
+                });
+            }
+        });
     }
 };
 
-module.exports = employeeShiftController;
+module.exports = shiftController;

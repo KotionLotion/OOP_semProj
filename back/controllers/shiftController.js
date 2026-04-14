@@ -1,10 +1,10 @@
 const db = require('../db/db');
-const { Shift } = require('../dist/Shift');
+const { Shift } = require('../dist/Shifts');
 
 const shiftController = {
 
     addShift: (req, res) => {
-        const {name, startTime, entTime} = req.body;
+        const {name, startTime, endTime} = req.body;
         const shift = new Shift(name, new Date(startTime), new Date(endTime));
 
         shift.save(db, (err, result) => {
@@ -25,7 +25,7 @@ const shiftController = {
     },
 
     getAllShifts: (req, res) => {
-        Shift.findAll(db,(err,res) => {
+        Shift.findAll(db,(err, shifts) => {
             if (err) {
                 res.json({
                     success:false,
@@ -40,7 +40,7 @@ const shiftController = {
 
     getShift: (req, res) => {
         const id = req.params.id;
-        Shift.findById(bd, id, (err, shift) => {
+        Shift.findById(db, id, (err, shift) => {
             if (err) {
                 res.json({
                     success: false,

@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const employeeRoutes = require('./routes/employeeRoutes');
 const shiftRoutes = require('./routes/shiftRoutes');
 const employeeShiftRoutes = require('./routes/employeeShiftRoutes');
@@ -14,6 +15,14 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
+});
+
+// Serve static files from the "front" directory
+app.use(express.static(path.join(__dirname, '../front')));
+
+// Serve index.html as the root page and /index.html
+app.get(['/', '/index.html'], (req, res) => {
+    res.sendFile(path.join(__dirname, '../front/views/index.html'));
 });
 
 // Routes
