@@ -25,6 +25,11 @@ app.get(['/', '/index.html'], (req, res) => {
     res.sendFile(path.join(__dirname, '../front/views/index.html'));
 });
 
+// Serve employees.html
+app.get('/employees.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../front/views/employees.html'));
+});
+
 // Routes
 app.use('/api', employeeRoutes);
 app.use('/api', shiftRoutes);

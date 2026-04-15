@@ -1,14 +1,14 @@
 export class Employee {
     private _id: number;
-    private _username : string;
-    private _role: string;
+    private _firstName : string;
+    private _lastName: string;
     private _department: string;
     private _createdAt: Date;
 
-    constructor(username: string, role: string, department: string, id?: number, createdAt?: Date) {
+    constructor(firstName: string, lastName: string, department: string, id?: number, createdAt?: Date) {
         this._id = id || 0;
-        this._username = username;
-        this._role = role;
+        this._firstName = firstName;
+        this._lastName = lastName;
         this._department = department;
         this._createdAt = createdAt || new Date();
     }
@@ -17,11 +17,11 @@ export class Employee {
         getId(): number {
             return this._id;
         }
-        getUsername(): string {
-            return this._username;
+        getFirstName(): string {
+            return this._firstName;
         }
-        getRole(): string {
-            return this._role;
+        getLastName(): string {
+            return this._lastName;
         }
         getDepartment(): string{
             return this._department;
@@ -31,11 +31,11 @@ export class Employee {
         }
 
     //Setters
-        setUsername(username:string): void{
-            this._username = username;
+        setFirstName(firstName:string): void{
+            this._firstName = firstName;
         }
-        setRole(role:string): void {
-            this._role = role;
+        setLastName(lastName:string): void {
+            this._lastName = lastName;
         }
         setDepartment(department: string) : void {
             this._department = department;
@@ -45,8 +45,8 @@ export class Employee {
         save(db: any, callback: Function): void {
 
             if (this._id === 0) { 
-                const query = "INSERT INTO employees (username, role, department, created_at) VALUES (?, ?, ?, ?)";
-                db.query(query, [this._username, this._role, this._department, this._createdAt], (err: any, result:any) => {
+                const query = "INSERT INTO employees (first_name, last_name, department, created_at) VALUES (?, ?, ?, ?)";
+                db.query(query, [this._firstName, this._lastName, this._department, this._createdAt], (err: any, result:any) => {
                     if (err) { 
                         callback(err, null); 
                         return; 
@@ -57,8 +57,8 @@ export class Employee {
                 });
             } 
             else {
-                const query = "UPDATE employees SET username=?, role=?, department=? WHERE id=?";
-                db.query(query, [this._username, this._role, this._department, this._id], (err: any, result:any) => {
+                const query = "UPDATE employees SET first_name=?, last_name=?, department=? WHERE id=?";
+                db.query(query, [this._firstName, this._lastName, this._department, this._id], (err: any, result:any) => {
                     if (err) { 
                         callback(err, null); 
                         return; 
@@ -82,7 +82,7 @@ export class Employee {
                 }
 
                 const e = rows [0];
-                const employee = new Employee(e.username, e.role, e.department, e.id, e.created_at);
+                const employee = new Employee(e.first_name, e.last_name, e.department, e.id, e.created_at);
                 callback(null, employee);
             });
         }
@@ -95,8 +95,19 @@ export class Employee {
                     return;
                 }
             
-                const employees = rows.map((r: any) => new Employee(r.username, r.role, r.department, r.id, r.created_at));
+                const employees = rows.map((r: any) => new Employee(r.first_name, r.last_name, r.department, r.id, r.created_at));
                 callback(null, employees);
+            });
+        }
+
+        static deleteById(db: any, id: number, callback: Function): void {
+            const query = "DELETE FROM employees WHERE id=?";
+            db.query(query, [id], (err: any, result: any) => {
+                if (err) {
+                    callback(err, null);
+                    return;
+                }
+                callback(null, result);
             });
         }
 
