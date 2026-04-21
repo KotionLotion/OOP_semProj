@@ -40,3 +40,11 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
 );
+
+DROP TABLE IF EXISTS users;
+
+-- altering to make employees = users
+ALTER TABLE employees
+ADD COLUMN username VARCHAR(100) UNIQUE,
+ADD COLUMN password_hash VARCHAR(255),
+ADD COLUMN role ENUM('employee', 'manager') DEFAULT 'employee';

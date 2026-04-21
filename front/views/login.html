@@ -42,12 +42,9 @@
     </div>
 
     <script>
-        // If already logged in, skip
-        fetch('/api/auth/me')
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) window.location.href = 'index.html';
-            });
+        // Check if already logged in
+        const token = localStorage.getItem('token');
+        if (token) window.location.href = '/views/index.html';
 
         document.getElementById('loginBtn').addEventListener('click', login);
         document.getElementById('password').addEventListener('keydown', e => {
@@ -57,7 +54,6 @@
         function login() {
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
-            const errorAlert = document.getElementById('errorAlert');
 
             if (!username || !password) {
                 showError('Please enter your username and password.');
@@ -71,13 +67,18 @@
             })
             .then(r => r.json())
             .then(data => {
+                console.log('Login response:', data);
                 if (data.success) {
-                    window.location.href = 'index.html';
+                    localStorage.setItem('token', data.token);
+                    window.location.href = '/views/index.html';
                 } else {
                     showError(data.message || 'Login failed.');
                 }
             })
-            .catch(() => showError('Server error. Please try again.'));
+            .catch(err => {
+                console.error('Error:', err);
+                showError('Server error. Please try again.');
+            });
         }
 
         function showError(msg) {

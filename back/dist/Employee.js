@@ -1,90 +1,158 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Employee = void 0;
+
 class Employee {
-    constructor(username, role, department, id, createdAt) {
+    constructor(firstName, lastName, department, id, createdAt, username, passwordHash, role) {
         this._id = id || 0;
-        this._username = username;
-        this._role = role;
+
+        this._firstName = firstName;
+        this._lastName = lastName;
         this._department = department;
+
         this._createdAt = createdAt || new Date();
+
+        // auth fields
+        this._username = username || null;
+        this._passwordHash = passwordHash || null;
+        this._role = role || 'employee';
     }
-    //Getters
-    getId() {
-        return this._id;
-    }
-    getUsername() {
-        return this._username;
-    }
-    getRole() {
-        return this._role;
-    }
-    getDepartment() {
-        return this._department;
-    }
-    getCreatedAt() {
-        return this._createdAt;
-    }
-    //Setters
-    setUsername(username) {
-        this._username = username;
-    }
-    setRole(role) {
-        this._role = role;
-    }
-    setDepartment(department) {
-        this._department = department;
-    }
-    // method
+
+    // Getters
+    getId() { return this._id; }
+    getFirstName() { return this._firstName; }
+    getLastName() { return this._lastName; }
+    getDepartment() { return this._department; }
+    getUsername() { return this._username; }
+    getRole() { return this._role; }
+    getCreatedAt() { return this._createdAt; }
+
+    // setters
+    setFirstName(v) { this._firstName = v; }
+    setLastName(v) { this._lastName = v; }
+    setDepartment(v) { this._department = v; }
+    setUsername(v) { this._username = v; }
+    setPasswordHash(v) { this._passwordHash = v; }
+    setRole(v) { this._role = v; }
+
+    // save
     save(db, callback) {
+
         if (this._id === 0) {
-            const query = "INSERT INTO employees (username, role, department, created_at) VALUES (?, ?, ?, ?)";
-            db.query(query, [this._username, this._role, this._department, this._createdAt], (err, result) => {
-                if (err) {
-                    callback(err, null);
-                    return;
-                }
+
+            const query = `
+                INSERT INTO employees
+                (first_name, last_name, department, username, password_hash, role)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+
+            db.query(query, [
+                this._firstName,
+                this._lastName,
+                this._department,
+                this._username,
+                this._passwordHash,
+                this._role
+            ], (err, result) => {
+                if (err) return callback(err);
+
                 this._id = result.insertId;
                 callback(null, result);
             });
-        }
-        else {
-            const query = "UPDATE employees SET username=?, role=?, department=? WHERE id=?";
-            db.query(query, [this._username, this._role, this._department, this._id], (err, result) => {
-                if (err) {
-                    callback(err, null);
-                    return;
-                }
-                callback(null, result);
-            });
+
+        } else {
+
+            const query = `
+                UPDATE employees SET
+                    first_name=?,
+                    last_name=?,
+                    department=?,
+                    username=?,
+                    role=?
+                WHERE id=?
+            `;
+
+            db.query(query, [
+                this._firstName,
+                this._lastName,
+                this._department,
+                this._username,
+                this._role,
+                this._id
+            ], callback);
         }
     }
-    static findById(db, id, callback) {
-        const query = "SELECT * FROM employees WHERE id=?";
-        db.query(query, [id], (err, rows) => {
-            if (err) {
-                callback(err, null);
-                return;
-            }
-            if (rows.length === 0) {
-                callback(null, null);
-                return;
-            }
-            const e = rows[0];
-            const employee = new Employee(e.username, e.role, e.department, e.id, e.created_at);
-            callback(null, employee);
-        });
-    }
+
+    //aLL
     static findAll(db, callback) {
-        const query = "SELECT * FROM employees";
-        db.query(query, (err, rows) => {
-            if (err) {
-                callback(err, null);
-                return;
-            }
-            const employees = rows.map((r) => new Employee(r.username, r.role, r.department, r.id, r.created_at));
+        db.query("SELECT * FROM employees", (err, rows) => {
+            if (err) return callback(err);
+
+            const employees = rows.map(r =>
+                new Employee(
+                    r.first_name,
+                    r.last_name,
+                    r.department,
+                    r.id,
+                    r.created_at,
+                    r.username,
+                    r.password_hash,
+                    r.role
+                )
+            );
+
             callback(null, employees);
         });
     }
+
+    // id
+    static findById(db, id, callback) {
+        db.query("SELECT * FROM employees WHERE id=?", [id], (err, rows) => {
+            if (err) return callback(err);
+            if (!rows.length) return callback(null, null);
+
+            const r = rows[0];
+
+            const employee = new Employee(
+                r.first_name,
+                r.last_name,
+                r.department,
+                r.id,
+                r.created_at,
+                r.username,
+                r.password_hash,
+                r.role
+            );
+
+            callback(null, employee);
+        });
+    }
+
+    //  (for login)
+    static findByUsername(db, username, callback) {
+        db.query("SELECT * FROM employees WHERE username=?", [username], (err, rows) => {
+            if (err) return callback(err);
+            if (!rows.length) return callback(null, null);
+
+            const r = rows[0];
+
+            const employee = new Employee(
+                r.first_name,
+                r.last_name,
+                r.department,
+                r.id,
+                r.created_at,
+                r.username,
+                r.password_hash,
+                r.role
+            );
+
+            callback(null, employee);
+        });
+    }
+
+    // DELETE
+    static deleteById(db, id, callback) {
+        db.query("DELETE FROM employees WHERE id=?", [id], callback);
+    }
 }
-exports.Employee = Employee;
+
+module.exports = { Employee };

@@ -1,64 +1,64 @@
 const db = require('../db/db');
-const { Shift } = require('../dist/Shifts');
 
-const shiftController = {
+const employeeShiftController = {
 
-    addShift: (req, res) => {
-        const {name, startTime, endTime} = req.body;
-        const shift = new Shift(name, new Date(startTime), new Date(endTime));
+    assignShift: (req, res) => {
+        const { employeeId, shiftId, assignedDate } = req.body;
+        const query = `INSERT INTO employee_shifts (employee_id, shift_id, assigned_date) 
+                       VALUES (?, ?, ?)`;
 
-        shift.save(db, (err, result) => {
+        db.query(query, [employeeId, shiftId, assignedDate], (err, result) => {
             if (err) {
-                res.json({
-                    success: false,
-                    error: err.message
-                });
+                res.json({ success: false, error: err.message });
                 return;
             }
-
-            res.json({
-                success: true,
-                message: 'Shift added successfully!',
-                shiftId: shift.getId()
-            });
+            res.json({ success: true, message: 'Shift assigned!', id: result.insertId });
         });
     },
 
-    getAllShifts: (req, res) => {
-        Shift.findAll(db,(err, shifts) => {
+    assignRecurringShift: (req, res) => {
+        const { employeeId, shiftId, dates } = req.body;
+        // dates should be an array of date strings e.g. ['2025-01-01', '2025-01-08']
+        if (!Array.isArray(dates) || dates.length === 0) {
+            res.json({ success: false, message: 'dates must be a non-empty array' });
+            return;
+        }
+
+        const values = dates.map(date => [employeeId, shiftId, date]);
+        const query = `INSERT INTO employee_shifts (employee_id, shift_id, assigned_date) VALUES ?`;
+
+        db.query(query, [values], (err, result) => {
             if (err) {
-                res.json({
-                    success:false,
-                    error: err.message
-                });
+                res.json({ success: false, error: err.message });
                 return;
             }
-
-            res.json(shifts);
-        })
+            res.json({ success: true, message: `${dates.length} shifts assigned!` });
+        });
     },
 
-    getShift: (req, res) => {
-        const id = req.params.id;
-        Shift.findById(db, id, (err, shift) => {
+    getShiftsForEmployee: (req, res) => {
+        const employeeId = req.params.id;
+        const query = `
+            SELECT 
+                es.id, es.assigned_date,
+                s.name, s.start_time, s.end_time,
+                e.first_name, e.last_name
+            FROM employee_shifts es
+            JOIN shifts s ON es.shift_id = s.id
+            JOIN employees e ON es.employee_id = e.id
+            WHERE es.employee_id = ?
+            ORDER BY es.assigned_date ASC
+        `;
+
+        db.query(query, [employeeId], (err, rows) => {
             if (err) {
-                res.json({
-                    success: false,
-                    error: err.message
-                });
+                res.json({ success: false, error: err.message });
                 return;
             }
-            if(shift) {
-                res.json(shift);
-            }
-            else {
-                res.json({
-                    success:false,
-                    message: 'Shift Not Found'
-                });
-            }
+            res.json(rows);
         });
     }
+
 };
 
-module.exports = shiftController;
+module.exports = employeeShiftController;

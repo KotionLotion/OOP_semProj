@@ -19,9 +19,12 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
+        secure: false, //false for HTTP (localhost)
+        sameSite: 'lax', // Allows cookie on page navs
         maxAge: 1000 * 60 * 60 * 8
     }
 }));
+
 // CORS
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -36,14 +39,6 @@ app.get('/login.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../front/views/login.html'));
 });
 
-// All other pages require a log in
-app.get(['/', '/index.html'], requireLogin, (req, res) => {
-    res.sendFile(path.join(__dirname, '../front/views/index.html'));
-});
-
-app.get('/employees.html', requireLogin, (req, res) => {
-    res.sendFile(path.join(__dirname, '../front/views/employees.html'));
-});
 
 //API routes
 app.use('/api/auth', authRoutes);

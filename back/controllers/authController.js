@@ -1,69 +1,100 @@
 const db = require('../db/db');
-const { User } = require('../dist/User');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { Employee } = require('../dist/Employee');
+
+const SECRET = 'shift-scheduler-jwt-secret';
 
 const authController = {
 
-    login: async (req, res) => {
+    login: (req, res) => {
         const { username, password } = req.body;
-        if (!username || !password) {
-            return res.json({ success: false, message: 'Username and password required' });
-        }
 
-        User.findByUsername(db, username, async (err, user) => {
-            if (err) return res.json({ success: false, error: err.message });
-            if (!user) return res.json({ success: false, message: 'Invalid credentials' });
+        Employee.findByUsername(db, username, async (err, user) => {
+            if (err || !user) {
+                return res.json({ success: false, message: 'Invalid credentials' });
+            }
 
-            const valid = await user.verifyPassword(password);
-            if (!valid) return res.json({ success: false, message: 'Invalid credentials' });
+            const valid = await bcrypt.compare(password, user._passwordHash);
 
-            // Store minimal info in session
-            req.session.user = {
-                id: user.getId(),
-                employeeId: user.getEmployeeId(),
-                username: user.getUsername(),
-                role: user.getRole()
-            };
+            if (!valid) {
+                return res.json({ success: false, message: 'Invalid credentials' });
+            }
 
-            res.json({
-                success: true,
-                user: req.session.user
-            });
-        });
-    },
-    //logout
-    logout: (req, res) => {
-        req.session.destroy(() => {
-            res.json({ success: true, message: 'Logged out' });
+            const token = jwt.sign(
+                {
+                    id: user.getId(),
+                    username: user.getUsername(),
+                    role: user.getRole()
+                },
+                SECRET,
+                { expiresIn: '8h' }
+            );
+
+            res.json({ success: true, token });
         });
     },
 
-    //check who's logged in
     me: (req, res) => {
-        if (req.session && req.session.user) {
-            res.json({ success: true, user: req.session.user });
-        } else {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+
+        if (!token) return res.json({ success: false });
+
+        try {
+            const user = jwt.verify(token, SECRET);
+            res.json({ success: true, user });
+        } catch {
             res.json({ success: false });
         }
     },
 
-    // manager/admin only
+    logout: (req, res) => {
+        res.json({ success: true });
+    },
+
     createUser: async (req, res) => {
-        const { employeeId, username, password, role } = req.body;
-        if (!employeeId || !username || !password) {
-            return res.json({ success: false, message: 'employeeId, username, and password are required' });
-        }
 
-        try {
-            const hash = await User.hashPassword(password);
-            const user = new User(employeeId, username, hash, role || 'employee');
+        const {
+            firstName,
+            lastName,
+            department,
+            username,
+            password,
+            role
+        } = req.body;
 
-            user.save(db, (err, result) => {
-                if (err) return res.json({ success: false, error: err.message });
-                res.json({ success: true, message: 'User created!', userId: user.getId() });
+        if (!username || !password) {
+            return res.json({
+                success: false,
+                message: 'Username and password required'
             });
-        } catch (e) {
-            res.json({ success: false, error: e.message });
         }
+
+        const hash = await bcrypt.hash(password, 10);
+
+        const employee = new Employee(
+            firstName,
+            lastName,
+            department,
+            0,
+            new Date(),
+            username,
+            hash,
+            role || 'employee'
+        );
+
+        employee.save(db, (err) => {
+            if (err) {
+                return res.json({ success: false, error: err.message });
+            }
+
+            res.json({
+                success: true,
+                message: 'Employee created!',
+                employeeId: employee.getId()
+            });
+        });
     }
 };
 
