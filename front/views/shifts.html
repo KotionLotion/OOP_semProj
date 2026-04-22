@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="../css/style.css">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- bootstrap.css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <title>Shift Management</title>
+    <style>
+        .shift-card {
+            border-left: 5px solid #0e4ea7c2;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .shift-card:hover {
+            box-shadow: 0 5px 25px rgba(4, 8, 243, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .shift-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-available {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-taken {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .employee-badge {
+            display: inline-block;
+            background-color: #0e4ea7;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin: 3px;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .shift-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .shift-time {
+            font-weight: 600;
+            color: #0e4ea7;
+            font-size: 18px;
+        }
+
+        .shift-details {
+            margin-top: 15px;
+        }
+
+        .assign-button {
+            background-color: #0e4ea7;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 14px;
+        }
+
+        .assign-button:hover {
+            background-color: #0a3a7f;
+            color: white;
+            text-decoration: none;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0.5;
+        }
+
+        .modal-header {
+            background-color: #0e4ea7;
+            color: white;
+        }
+
+        .modal-header .close {
+            color: white;
+            opacity: 0.9;
+        }
+
+        .form-control:focus {
+            border-color: #0e4ea7;
+            box-shadow: 0 0 0 0.2rem rgba(14, 78, 167, 0.25);
+        }
+
+        .btn-primary {
+            background-color: #0e4ea7;
+            border-color: #0e4ea7;
+        }
+
+        .btn-primary:hover {
+            background-color: #0a3a7f;
+            border-color: #0a3a7f;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 2px 3px 20px rgba(4, 8, 243, 0.15);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #0e4ea7;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner-border {
+            color: #0e4ea7;
+        }
+
+        .no-employees {
+            color: #94a3b8;
+            font-style: italic;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <!-- Nav Bar -->
+        <div class="header-bar d-flex align-items-center justify-content-between">
+            <div>
+                <h3>LOGO</h3>
+            </div>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="shifts.html" class="nav-link">Shifts</a>
+                <a href="employees.html" class="nav-link">Employees</a>
+            </nav>
+        </div>
+
+        <!-- Welcome Card -->
+        <div class="card mt-4">
+            <div class="card-body text-center">
+                <h1 class="m-0">Shift Management</h1>
+                <p class="text-muted p-1">View and assign employee shifts</p>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-container mt-4">
+            <div class="stat-card">
+                <div class="stat-number" id="totalShifts">0</div>
+                <div class="stat-label">Total Shifts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="availableShifts">0</div>
+                <div class="stat-label">Available Shifts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="assignedShifts">0</div>
+                <div class="stat-label">Assigned Shifts</div>
+            </div>
+        </div>
+
+        <!-- Shifts List -->
+        <div class="mt-4">
+            <div id="shiftsContainer" class="loading">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="mt-2">Loading shifts...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Shift Modal -->
+    <div class="modal fade" id="assignShiftModal" tabindex="-1" role="dialog" aria-labelledby="assignShiftModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assignShiftModalLabel">Assign Shift</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="shiftSelect">Select Employee</label>
+                        <select class="form-control" id="employeeSelect">
+                            <option value="">Choose an employee...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="assignDate">Assign Date</label>
+                        <input type="date" class="form-control" id="assignDate">
+                    </div>
+                    <input type="hidden" id="shiftIdToAssign">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="assignShift()">Assign Shift</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let shiftsData = [];
+        let employeesData = [];
+        let assignedShiftsMap = new Map(); // Map of shiftId -> [employees]
+
+        // Format time to readable format
+        function formatTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        // Initialize page
+        function initializePage() {
+            loadEmployees();
+            loadShifts();
+            loadAssignedShifts();
+        }
+
+        // Load all employees
+        function loadEmployees() {
+            fetch('/employees')
+                .then(response => response.json())
+                .then(data => {
+                    employeesData = Array.isArray(data) ? data : [];
+                    populateEmployeeSelect();
+                })
+                .catch(error => {
+                    console.error('Error loading employees:', error);
+                    employeesData = [];
+                });
+        }
+
+        // Load all shifts
+        function loadShifts() {
+            fetch('/shifts')
+                .then(response => response.json())
+                .then(data => {
+                    shiftsData = Array.isArray(data) ? data : [];
+                    renderShifts();
+                    updateStatistics();
+                })
+                .catch(error => {
+                    console.error('Error loading shifts:', error);
+                    const container = document.getElementById('shiftsContainer');
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error loading shifts</p></div>';
+                });
+        }
+
+        // Load assigned shifts
+        function loadAssignedShifts() {
+            // We need to fetch assigned shifts for each employee to show who's assigned to what shift
+            Promise.all(employeesData.map(emp => 
+                fetch(`/employee-shifts/${emp._id}`)
+                    .then(response => response.json())
+                    .catch(() => [])
+            ))
+            .then(results => {
+                assignedShiftsMap.clear();
+                results.forEach((shifts, index) => {
+                    if (Array.isArray(shifts)) {
+                        shifts.forEach(shift => {
+                            if (!assignedShiftsMap.has(shift._shiftId)) {
+                                assignedShiftsMap.set(shift._shiftId, []);
+                            }
+                            assignedShiftsMap.get(shift._shiftId).push({
+                                employeeId: employeesData[index]._id,
+                                employeeName: `${employeesData[index]._firstName} ${employeesData[index]._lastName}`,
+                                assignedDate: shift._assignedDate
+                            });
+                        });
+                    }
+                });
+                renderShifts();
+                updateStatistics();
+            })
+            .catch(error => {
+                console.error('Error loading assigned shifts:', error);
+                renderShifts();
+                updateStatistics();
+            });
+        }
+
+        // Populate employee dropdown in modal
+        function populateEmployeeSelect() {
+            const select = document.getElementById('employeeSelect');
+            select.innerHTML = '<option value="">Choose an employee...</option>';
+            employeesData.forEach(emp => {
+                const option = document.createElement('option');
+                option.value = emp._id;
+                option.textContent = `${emp._firstName} ${emp._lastName}`;
+                select.appendChild(option);
+            });
+        }
+
+        // Render shifts
+        function renderShifts() {
+            const container = document.getElementById('shiftsContainer');
+            
+            if (shiftsData.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-alt"></i>
+                        <p>No shifts found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            shiftsData.forEach(shift => {
+                const assignedEmployees = assignedShiftsMap.get(shift._id) || [];
+                const isAvailable = assignedEmployees.length === 0;
+                const startTime = formatTime(shift._startTime);
+                const endTime = formatTime(shift._endTime);
+
+                html += `
+                    <div class="card shift-card">
+                        <div class="card-body">
+                            <div class="shift-header">
+                                <div>
+                                    <div class="shift-time">${shift._name}</div>
+                                    <small class="text-muted">${startTime} - ${endTime}</small>
+                                </div>
+                                <span class="shift-status ${isAvailable ? 'status-available' : 'status-taken'}">
+                                    ${isAvailable ? 'AVAILABLE' : 'ASSIGNED'}
+                                </span>
+                            </div>
+
+                            <div class="shift-details">
+                                <strong>Assigned Employees:</strong>
+                                <div class="mt-2">
+                                    ${assignedEmployees.length > 0 
+                                        ? assignedEmployees.map(emp => 
+                                            `<span class="employee-badge">${emp.employeeName}</span>`
+                                          ).join('')
+                                        : `<span class="no-employees">No employees assigned</span>`
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <button class="assign-button" onclick="openAssignModal(${shift._id}, '${shift._name}')">
+                                    <i class="fas fa-plus"></i> Assign to Employee
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const total = shiftsData.length;
+            const assigned = Array.from(assignedShiftsMap.values()).filter(arr => arr.length > 0).length;
+            const available = total - assigned;
+
+            document.getElementById('totalShifts').textContent = total;
+            document.getElementById('availableShifts').textContent = available;
+            document.getElementById('assignedShifts').textContent = assigned;
+        }
+
+        // Open assign modal
+        function openAssignModal(shiftId, shiftName) {
+            document.getElementById('shiftIdToAssign').value = shiftId;
+            document.getElementById('assignShiftModalLabel').textContent = `Assign Shift: ${shiftName}`;
+            document.getElementById('employeeSelect').value = '';
+            document.getElementById('assignDate').value = new Date().toISOString().split('T')[0];
+            $('#assignShiftModal').modal('show');
+        }
+
+        // Assign shift to employee
+        function assignShift() {
+            const shiftId = document.getElementById('shiftIdToAssign').value;
+            const employeeId = document.getElementById('employeeSelect').value;
+            const assignDate = document.getElementById('assignDate').value;
+
+            if (!employeeId) {
+                alert('Please select an employee');
+                return;
+            }
+
+            if (!assignDate) {
+                alert('Please select a date');
+                return;
+            }
+
+            fetch('/employee-shifts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    employeeId: parseInt(employeeId),
+                    shiftId: parseInt(shiftId),
+                    assignedDate: new Date(assignDate).toISOString()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Shift assigned successfully!');
+                    $('#assignShiftModal').modal('hide');
+                    loadAssignedShifts();
+                } else {
+                    alert('Error assigning shift: ' + (data.error || data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error assigning shift');
+            });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+</body>
+
+</html>
